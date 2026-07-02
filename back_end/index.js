@@ -18,8 +18,15 @@ const app = express();
 
 app.use(express.json());
 app.use(morgan("dev"));
-app.use(cors());
-
+app.use(
+  cors({
+    origin: [
+      "https://laber-management-app.onrender.com",
+      "http://localhost:5173",
+    ],
+    credentials: true,
+  })
+);
 // api end point
 app.use("/api/auth", userRoutes);
 // attenedence
