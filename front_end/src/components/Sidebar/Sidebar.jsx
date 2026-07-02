@@ -207,9 +207,7 @@ const SidebarContent = ({ onNavClick }) => {
               <Link
                 to={item.path}
                 style={S.navLink(isActive)}
-                onClick={() => {
-                  window.location.href = item.path; // 🔥 full refresh
-                }}
+                
                 onMouseEnter={(e) => {
                   if (!isActive) {
                     e.currentTarget.style.background = "rgba(255,255,255,0.07)";
