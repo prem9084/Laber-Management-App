@@ -160,12 +160,9 @@ const Home = () => {
                     <p className="animated fadeInDown">
                       to take your business further
                     </p>
-                    <button
-  className="thm-btn animated fadeInDown"
-  onClick={() => window.location.href = "/login"}
->
-  LOGIN ACCOUNT
-</button>
+                    <Link to="/login" className="thm-btn animated fadeInDown">
+                      LOGIN ACCOUNT
+                    </Link>
                   </div>
                 </div>
               </div>
