@@ -160,10 +160,7 @@ const Home = () => {
                     <p className="animated fadeInDown">
                       to take your business further
                     </p>
-                    <Link
-                      to="/login"
-                      className="thm-btn animated fadeInDown"
-                    >
+                    <Link to="/login" className="thm-btn animated fadeInDown">
                       LOGIN ACCOUNT
                     </Link>
                   </div>
