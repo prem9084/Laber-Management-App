@@ -22,7 +22,7 @@ app.use(
   cors({
     origin: [
       "https://laber-management-app.onrender.com",
-      "http://localhost:5173",
+      "https://laber-management.netlify.app",
     ],
     credentials: true,
   })
