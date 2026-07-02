@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Layout from "../HeadSection/Layout";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState("payroll");
@@ -159,12 +160,12 @@ const Home = () => {
                     <p className="animated fadeInDown">
                       to take your business further
                     </p>
-                    <a
-                      href="/login"
+                    <Link
+                      to="/login"
                       className="thm-btn animated fadeInDown"
                     >
                       LOGIN ACCOUNT
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
