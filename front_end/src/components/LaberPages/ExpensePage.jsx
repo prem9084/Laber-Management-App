@@ -4,6 +4,7 @@ import Sidebar from '../Sidebar/Sidebar'
 import { useState } from 'react';
 import axios from 'axios';
 import { useEffect } from 'react';
+import api from '../../api/axios';
 
 const ExpensePage = () => {
     const [expenses, setExpenses] = useState([]);
@@ -12,7 +13,7 @@ const ExpensePage = () => {
 const id = user?.id;
   const getAllMyExpences = async () => {
     try {
-      const {data} = await axios.get(`/api/laber/my-expenses/${id}`,{headers: {
+      const {data} = await api.get(`/api/laber/my-expenses/${id}`,{headers: {
           Authorization: `Bearer ${token}`,
         },});
       setExpenses(data.expenses);

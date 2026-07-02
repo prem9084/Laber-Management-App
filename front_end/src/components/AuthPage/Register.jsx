@@ -3,6 +3,7 @@ import Layout from '../HeadSection/Layout'
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import api from '../../api/axios';
 const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
 
@@ -18,7 +19,7 @@ const Register = () => {
     async function handleSubmit(e) {
       e.preventDefault();
       try {
-        const {data} = await axios.post(
+        const {data} = await api.post(
           "/api/auth/register",
           {
             name,

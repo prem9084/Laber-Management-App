@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Layout from '../HeadSection/Layout'
 import Sidebar from '../Sidebar/Sidebar'
 import axios from 'axios';
+import api from '../../api/axios';
 
 const AttendencePage = () => {
   const [attendance, setAttendance] = useState([]);
@@ -10,7 +11,7 @@ const AttendencePage = () => {
 const id = user?.id;
   const getAllMyAttendence = async () => {
     try {
-      const {data} = await axios.get(`/api/laber/my-attendence/${id}`,{headers: {
+      const {data} = await api.get(`/api/laber/my-attendence/${id}`,{headers: {
           Authorization: `Bearer ${token}`,
         },});
         

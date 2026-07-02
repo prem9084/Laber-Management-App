@@ -65,45 +65,49 @@
 <script src="https://cdn.datatables.net/2.3.8/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
-  let isInitRunning = false;
+(function () {
+  const $ = window.jQuery;
 
-  function initAllDataTables() {
-    if (isInitRunning) return;
-    isInitRunning = true;
+  function initDataTable(table) {
+    if (!table.id) return;
 
-    const $ = window.jQuery;
-    if (!$ || !$.fn.DataTable) {
-      isInitRunning = false;
-      return;
-    }
+    const selector = "#" + table.id;
 
-    document.querySelectorAll("table[data-datatable='true']").forEach((table) => {
-      const id = table.id;
-      if (!id) return;
+    // पहले से बनी है तो कुछ मत करो
+    if ($.fn.DataTable.isDataTable(selector)) return;
 
-      const selector = "#" + id;
+    // data आने के बाद ही init करो
+    if (table.querySelectorAll("tbody tr").length === 0) return;
 
-      // ❌ no destroy loop
-      if (!$.fn.DataTable.isDataTable(selector)) {
-        $(selector).DataTable({
-          responsive: true,
-          pageLength: 10,
-          lengthMenu: [5, 10, 25, 50],
-          language: {
-            search: "Search:",
-            lengthMenu: "_MENU_ entries",
-            emptyTable: ""
-          }
-        });
+    $(selector).DataTable({
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [5, 10, 25, 50],
+      language: {
+        search: "Search:",
+        lengthMenu: "_MENU_ entries",
+        emptyTable: "No Data Found"
       }
     });
-
-    isInitRunning = false;
   }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(initAllDataTables, 800);
+  function scanTables() {
+    document
+      .querySelectorAll("table[data-datatable='true']")
+      .forEach(initDataTable);
+  }
+
+  window.addEventListener("load", scanTables);
+
+  const observer = new MutationObserver(() => {
+    scanTables();
   });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+})();
 </script>
     
 </html>

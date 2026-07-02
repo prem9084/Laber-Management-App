@@ -16,12 +16,8 @@ export const registerController = async (req, res) => {
         return res.status(400).json({ message: "Father's Name is required" });
       case !mobile:
         return res.status(400).json({ message: "Mobile is required" });
-      case !email:
-        return res.status(400).json({ message: "Email is required" });
       case !password:
         return res.status(400).json({ message: "Password is required" });
-      case !address:
-        return res.status(400).json({ message: "Address is required" });
       default:
         break;
     }

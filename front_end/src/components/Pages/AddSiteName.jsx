@@ -4,6 +4,7 @@ import Layout from "../HeadSection/Layout";
 import { toast } from "react-toastify";
 import axios from 'axios'
 import { useNavigate } from "react-router-dom";
+import api from "../../api/axios";
 
 /*
   NOTE: jQuery, DataTables JS/CSS aur Bootstrap globally
@@ -32,7 +33,7 @@ const navigate = useNavigate()
   try {
     
 
-    const { data } = await axios.post(
+    const { data } = await api.post(
       "/api/attendence/add_site",
       {siteName: sitename },
       {
@@ -56,7 +57,7 @@ const navigate = useNavigate()
 
 const AllSites = async()=>{
   try {
-    const {data} = await axios.get("/api/attendence/all_site", {
+    const {data} = await api.get("/api/attendence/all_site", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -71,7 +72,7 @@ const AllSites = async()=>{
 }
 const deleteSites = async(id)=>{
   try {
-    const {data} = await axios.delete(`/api/attendence/delete-site/${id}`, {
+    const {data} = await api.delete(`/api/attendence/delete-site/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

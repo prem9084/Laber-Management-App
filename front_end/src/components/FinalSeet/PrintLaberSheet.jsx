@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import api from "../../api/axios";
 
 const PrintLaberSheet = () => {
   const [finalData, setFinalData] = useState([]);
@@ -9,7 +10,7 @@ const PrintLaberSheet = () => {
   const adminName = JSON.parse(user)?.name || "Thekedar";
   const fetchFinalData = async () => {
     try {
-      const { data } = await axios.get(
+      const { data } = await api.get(
         "/api/attendence/final-sheet",
         {
           headers: { Authorization: `Bearer ${token}` },

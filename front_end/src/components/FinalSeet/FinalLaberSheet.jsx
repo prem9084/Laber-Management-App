@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Layout from "../HeadSection/Layout";
 import Sidebar from "../Sidebar/Sidebar";
 import axios from "axios";
+import api from "../../api/axios";
 
 const FinalLaberSheet = () => {
   const [finalData, setFinalData] = useState([]);
@@ -9,7 +10,7 @@ const FinalLaberSheet = () => {
 
   const fetchFinalData = async () => {
     try {
-      const { data } = await axios.get(
+      const { data } = await api.get(
         "/api/attendence/final-sheet",
         {
           headers: {

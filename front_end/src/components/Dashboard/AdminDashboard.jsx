@@ -4,6 +4,7 @@ import Chart from "chart.js/auto";
 import Sidebar from "../Sidebar/Sidebar";
 import { useState } from "react";
 import axios from "axios";
+import api from "../../api/axios";
 
 /* ================= CHART CONFIG ================= */
 // const chartConfigs = {
@@ -52,7 +53,7 @@ const [todayExpense, setTodayExpense] = useState(0);
 
  const getAllMyAttendence = async () => {
     try {
-      const {data} = await axios.get(`/api/laber/my-attendence/${id}`,{headers: {
+      const {data} = await api.get(`/api/laber/my-attendence/${id}`,{headers: {
           Authorization: `Bearer ${token}`,
         },});
       setAttendance(data.attendance);
@@ -63,7 +64,7 @@ const [todayExpense, setTodayExpense] = useState(0);
   }
  const getAllMyExpences = async () => {
     try {
-      const {data} = await axios.get(`/api/laber/my-expenses/${id}`,{headers: {
+      const {data} = await api.get(`/api/laber/my-expenses/${id}`,{headers: {
           Authorization: `Bearer ${token}`,
         },});
       setExpenses(data.expenses);

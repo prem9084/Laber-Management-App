@@ -3,6 +3,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import Layout from "../HeadSection/Layout";
 import axios from "axios";
 import { toast } from "react-toastify";
+import api from "../../api/axios";
 function AttendancePage() {
   const token = localStorage.getItem("token");
   const [type, setType] = useState("");
@@ -18,7 +19,7 @@ function AttendancePage() {
     e.preventDefault();
 
     try {
-      const { data } = await axios.post(
+      const { data } = await api.post(
         "/api/attendence/insert_intendence",
         {
           siteId,
@@ -48,7 +49,7 @@ function AttendancePage() {
   const getSite = async () => {
     try {
       try {
-        const { data } = await axios.get(
+        const { data } = await api.get(
           "/api/attendence/all_site",
           {
             headers: {
@@ -68,7 +69,7 @@ function AttendancePage() {
   const getUser = async () => {
     try {
       try {
-        const { data } = await axios.get(
+        const { data } = await api.get(
           "/api/auth/all-user",
           {
             headers: {
@@ -87,7 +88,7 @@ function AttendancePage() {
 
   const getAttendance = async () => {
     try {
-      const { data } = await axios.get(
+      const { data } = await api.get(
         "/api/attendence/attendance",
         {
           headers: {

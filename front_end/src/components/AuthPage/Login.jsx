@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { redirect } from "react-router-dom";
+import api from "../../api/axios.js";
 const Login = () => {
   const [mobile, setMobile] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -13,7 +14,7 @@ const Login = () => {
     event.preventDefault();
 
     try {
-      const { data } = await axios.post(
+      const { data } = await api.post(
         "/api/auth/login",
         {
           mobile,

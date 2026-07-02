@@ -3,6 +3,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import Layout from "../HeadSection/Layout";
 import axios from "axios";
 import { toast } from "react-toastify";
+import api from "../../api/axios";
 
 /*
   NOTE: jQuery, DataTables JS/CSS aur Bootstrap ab globally
@@ -20,8 +21,8 @@ function UsersPage() {
 const getUser = async () => {
     try {
       try {
-        const { data } = await axios.get(
-          "http://localhost:8000/api/auth/all-user",
+        const { data } = await api.get(
+          "/api/auth/all-user",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -39,7 +40,7 @@ const getUser = async () => {
 
   const deleteUser = async (userId) => {
     try {
-      const { data } = await axios.delete(
+      const { data } = await api.delete(
         `/api/auth/delete-user/${userId}`,
         {
           headers: {
