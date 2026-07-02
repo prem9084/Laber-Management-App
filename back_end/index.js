@@ -23,6 +23,7 @@ app.use(
     origin: [
       "https://laber-management-app.onrender.com",
       "https://laber-management-app.vercel.app",
+      'https://laber-management-app-1.onrender.com'
     ],
     credentials: true,
   })
