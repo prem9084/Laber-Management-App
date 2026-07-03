@@ -15,12 +15,13 @@ function AttendancePage() {
   const [rate, setRate] = useState("");
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [btnLoading, setBtnLoading] = useState(false);
 
   const submitAttendance = async (e) => {
     e.preventDefault();
 
     try {
-      setLoading(true);
+      setBtnLoading(true);
       const { data } = await api.post(
         "/api/attendence/insert_intendence",
         {
@@ -47,7 +48,7 @@ function AttendancePage() {
       console.log(error);
       toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
-      setLoading(false);
+      setBtnLoading(false);
     }
   };
   const getSite = async () => {
@@ -102,11 +103,14 @@ function AttendancePage() {
   const deleteAttendance = async (id) => {
     try {
       setLoading(true);
-      const { data } = await api.delete(`/api/attendence/delete-attendance/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const { data } = await api.delete(
+        `/api/attendence/delete-attendance/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
       if (data.success) {
         toast.success(data.message);
         getAttendance(); // Refresh the attendance list
@@ -218,7 +222,7 @@ function AttendancePage() {
                                       hour12: true,
                                     })}
                                   </td>
-                                   <td>
+                                  <td>
                                     <button
                                       type="button"
                                       onClick={() => deleteAttendance(a._id)}
@@ -395,10 +399,23 @@ function AttendancePage() {
 
                       <button
                         type="submit"
-                        className="btn btn-warning fw-bold w-100 py-2 submit-btn"
+                        className="btn btn-warning fw-bold w-100 py-2"
+                        disabled={btnLoading}
                       >
-                        <i className="bi bi-check-circle-fill me-2"></i>Submit
-                        Attendance
+                        {btnLoading ? (
+                          <>
+                            <span
+                              className="spinner-border spinner-border-sm me-2"
+                              role="status"
+                            ></span>
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-check-circle-fill me-2"></i>
+                            Add Attendance
+                          </>
+                        )}
                       </button>
                     </form>
                   </div>

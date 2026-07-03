@@ -22,6 +22,7 @@ function ExpensePage() {
   const [description, setDescription] = useState("");
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [btnLoading, setBtnLoading] = useState(false);
   const getSite = async () => {
     try {
       setLoading(true);
@@ -110,7 +111,6 @@ function ExpensePage() {
   }, []);
 
   const totalAmount = expenses.reduce((sum, e) => sum + Number(e.Amount), 0);
-
 
   const deleteExpense = async (id) => {
     try {
@@ -209,7 +209,7 @@ function ExpensePage() {
                                       timeZone: "Asia/Kolkata",
                                     })}
                                   </td>
-                                    <td>
+                                  <td>
                                     <button
                                       type="button"
                                       onClick={() => deleteExpense(e._id)}
@@ -355,10 +355,23 @@ function ExpensePage() {
 
                       <button
                         type="submit"
-                        className="btn btn-warning fw-bold w-100 py-2 submit-btn"
+                        className="btn btn-warning fw-bold w-100 py-2"
+                        disabled={btnLoading}
                       >
-                        <i className="bi bi-check-circle-fill me-2"></i>Submit
-                        Attendance
+                        {btnLoading ? (
+                          <>
+                            <span
+                              className="spinner-border spinner-border-sm me-2"
+                              role="status"
+                            ></span>
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-check-circle-fill me-2"></i>
+                            Submit Expense
+                          </>
+                        )}
                       </button>
                     </form>
                   </div>

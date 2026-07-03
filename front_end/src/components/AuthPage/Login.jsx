@@ -8,20 +8,19 @@ import api from "../../api/axios.js";
 const Login = () => {
   const [mobile, setMobile] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [btnLoading, setBtnLoading] = useState(false);
   const navigate = useNavigate();
 
   async function loginUser(event) {
     event.preventDefault();
 
     try {
-      const { data } = await api.post(
-        "/api/auth/login",
-        {
-          mobile,
-          password,
-        },
-      );
-console.log(data.user);
+      setBtnLoading(true);
+      const { data } = await api.post("/api/auth/login", {
+        mobile,
+        password,
+      });
+      console.log(data.user);
 
       if (data.success) {
         // Token Save
@@ -42,6 +41,8 @@ console.log(data.user);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setBtnLoading(false);
     }
   }
 
@@ -73,8 +74,25 @@ console.log(data.user);
               <a href="#" className="forgot-password">
                 Forgot password?
               </a>
-              <button type="submit" className="thm-btn">
-                Sign In
+              <button
+                type="submit"
+                className="btn btn-warning fw-bold w-100 py-2"
+                disabled={btnLoading}
+              >
+                {btnLoading ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                    ></span>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-check-circle-fill me-2"></i>
+                    Sign In
+                  </>
+                )}
               </button>
               <p className="sign-up-link">
                 New to Payonline? <Link to="/register">Sign up</Link>
