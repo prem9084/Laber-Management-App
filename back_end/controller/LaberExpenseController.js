@@ -1,47 +1,45 @@
-import laberExpenseModel from '../models/LaberExpencesModel.js'
-import Attendance from '../models/attendanceModel.js';
-import User from '../models/userModel.js';
-import Site from '../models/SiteModel.js';
+import laberExpenseModel from "../models/LaberExpencesModel.js";
+import Attendance from "../models/attendanceModel.js";
+import User from "../models/userModel.js";
+import Site from "../models/SiteModel.js";
 export const laberExpenses = async (req, res) => {
-    try {
-        const {
-            siteId,
-            laberId,
-            date,       // sirf "YYYY-MM-DD" aayega frontend se
-            Amount,
-            description
-        } = req.body;
+  try {
+    const {
+      siteId,
+      laberId,
+      date, // sirf "YYYY-MM-DD" aayega frontend se
+      Amount,
+      description,
+    } = req.body;
 
-        // frontend se aayi date ke saath server ka current time combine karo
-        const now = new Date();
-        const selectedDate = new Date(date);
-        selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+    // frontend se aayi date ke saath server ka current time combine karo
+    const now = new Date();
+    const selectedDate = new Date(date);
+    selectedDate.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
 
-        const attendance = await laberExpenseModel.create({
-            siteId,
-            laberId,
-            date: selectedDate,
-            Amount,
-            description
-        });
+    const attendance = await laberExpenseModel.create({
+      siteId,
+      laberId,
+      date: selectedDate,
+      Amount,
+      description,
+    });
 
-        res.status(201).json({
-            success: true,
-            message: "Attendance added successfully",
-            attendance
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
-    }
+    res.status(201).json({
+      success: true,
+      message: "Attendance added successfully",
+      attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 export const getExpense = async (req, res) => {
   try {
-
     const expenses = await laberExpenseModel
       .find()
       .populate("laberId", "name fatherName")
@@ -51,7 +49,6 @@ export const getExpense = async (req, res) => {
       success: true,
       expenses: expenses,
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -61,32 +58,50 @@ export const getExpense = async (req, res) => {
 };
 // update expense
 export const updateLaberExpense = async (req, res) => {
-    try {
-        const { laberId } = req.params;
-        const { Amount, date, description } = req.body;
-        const updatedExpense = await laberExpenseModel.findOneAndUpdate(
-            { laberId },
-            { Amount, date, description },
-            { new: true }
-        );
-        res.status(200).send({ message: "Expense updated successfully", expense: updatedExpense });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+  try {
+    const { laberId } = req.params;
+    const { Amount, date, description } = req.body;
+    const updatedExpense = await laberExpenseModel.findOneAndUpdate(
+      { laberId },
+      { Amount, date, description },
+      { new: true },
+    );
+    res.status(200).send({
+      message: "Expense updated successfully",
+      expense: updatedExpense,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 export const deleteLaberExpense = async (req, res) => {
-    try {
-        const { laberId } = req.params;
-        const deletedExpense = await laberExpenseModel.findOneAndDelete({ laberId });
-        res.status(200).send({ message: "Expense deleted successfully", expense: deletedExpense });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const { id } = req.params;
+
+    const expense = await laberExpenseModel.findByIdAndDelete(id);
+
+    if (!expense) {
+      return res.status(404).json({
+        success: false,
+        message: "Expense not found",
+      });
     }
+
+    res.status(200).json({
+      success: true,
+      message: "Expense deleted successfully",
+      expense,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 // Finle Sheet Calculation like Attendance, Expense, Material, Labour, etc. for a specific site and date range exel sheet
-
 
 export const finalSheet = async (req, res) => {
   try {
@@ -127,6 +142,36 @@ export const finalSheet = async (req, res) => {
       },
     ]);
 
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const todayExpense = await laberExpenseModel.aggregate([
+      {
+        $match: {
+          date: {
+            $gte: startOfDay,
+            $lte: endOfDay,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalExpense: {
+            $sum: "$Amount",
+          },
+        },
+      },
+    ]);
+
+    const totalTodayExpense =
+      todayExpense.length > 0 ? todayExpense[0].totalExpense : 0;
+
+    console.log("Today's Total Expense:", totalTodayExpense);
+
     const result = await Promise.all(
       attendance.map(async (item) => {
         // Expense
@@ -147,8 +192,7 @@ export const finalSheet = async (req, res) => {
           },
         ]);
 
-        const totalExpense =
-          expense.length > 0 ? expense[0].totalExpense : 0;
+        const totalExpense = expense.length > 0 ? expense[0].totalExpense : 0;
 
         // User
         const laber = await User.findById(item._id.laberId);
@@ -157,17 +201,13 @@ export const finalSheet = async (req, res) => {
         const site = await Site.findById(item._id.siteId);
 
         // Amount
-        const thandiAmount =
-          item.thandiAttendance * item.thandiRate;
+        const thandiAmount = item.thandiAttendance * item.thandiRate;
 
-        const garamAmount =
-          item.garamAttendance * item.garamRate;
+        const garamAmount = item.garamAttendance * item.garamRate;
 
-        const totalIncome =
-          thandiAmount + garamAmount;
+        const totalIncome = thandiAmount + garamAmount;
 
-        const baki =
-          totalIncome - totalExpense;
+        const baki = totalIncome - totalExpense;
 
         return {
           siteId: item._id.siteId,
@@ -194,12 +234,33 @@ export const finalSheet = async (req, res) => {
 
           baki,
         };
-      })
+      }),
+    );
+
+    const totals = result.reduce(
+      (acc, item) => {
+        acc.thandiAttendance += item.thandiAttendance;
+        acc.garamAttendance += item.garamAttendance;
+        acc.totalIncome += item.totalIncome;
+        acc.totalExpense += item.totalExpense;
+        acc.baki += item.baki;
+
+        return acc;
+      },
+      {
+        thandiAttendance: 0,
+        garamAttendance: 0,
+        totalIncome: 0,
+        totalExpense: 0,
+        baki: 0,
+      },
     );
 
     res.status(200).json({
       success: true,
       data: result,
+      todayTotalExpense: totalTodayExpense,
+      totals,
     });
   } catch (error) {
     console.log(error);

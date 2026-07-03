@@ -14,11 +14,13 @@ function AttendancePage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [rate, setRate] = useState("");
   const [attendance, setAttendance] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const submitAttendance = async (e) => {
     e.preventDefault();
 
     try {
+      setLoading(true);
       const { data } = await api.post(
         "/api/attendence/insert_intendence",
         {
@@ -44,39 +46,34 @@ function AttendancePage() {
     } catch (error) {
       console.log(error);
       toast.error(error.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
   const getSite = async () => {
     try {
-      try {
-        const { data } = await api.get(
-          "/api/attendence/all_site",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        setSite(data.sites);
-      } catch (error) {
-        console.log(error);
-      }
+      setLoading(true);
+      const { data } = await api.get("/api/attendence/all_site", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setSite(data.sites);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const getUser = async () => {
     try {
       try {
-        const { data } = await api.get(
-          "/api/auth/all-user",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const { data } = await api.get("/api/auth/all-user", {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
         setUsers(data.users);
       } catch (error) {
         console.log(error);
@@ -88,17 +85,39 @@ function AttendancePage() {
 
   const getAttendance = async () => {
     try {
-      const { data } = await api.get(
-        "/api/attendence/attendance",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      setLoading(true);
+      const { data } = await api.get("/api/attendence/attendance", {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       setAttendance(data.attendance);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteAttendance = async (id) => {
+    try {
+      setLoading(true);
+      const { data } = await api.delete(`/api/attendence/delete-attendance/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (data.success) {
+        toast.success(data.message);
+        getAttendance(); // Refresh the attendance list
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -136,51 +155,86 @@ function AttendancePage() {
                     </div>
 
                     <div className="table-responsive">
-                      <table
-                        id="attendanceTable"
-                        data-datatable="true"
-                        className="table table-striped table-bordered align-middle w-100"
-                      >
-                        <thead className="table-dark">
-                          <tr>
-                            <th>Site Name</th>
-                            <th>User</th>
-                            <th>Type</th>
-                            <th>Dihadi</th>
-                            <th>Date</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {attendance.map((a, i) => (
-                            <tr key={i}>
-                              <td>{a.siteId?.siteName}</td>
-                              <td>
-                                {a.laberId?.name} S/O {a.laberId?.fatherName}
-                              </td>
-                              <td>
-                                <span
-                                  className={`badge ${
-                                    a.type === "1" ? "bg-danger" : "bg-info"
-                                  } text-white d-inline-flex align-items-center justify-content-center px-2 py-1`}
-                                >
-                                  {a.type === "1" ? "गरम" : "ठंडी"}
-                                </span>
-                              </td>
-                              {/* rupaye inr me */}
-                              <td>₹ {Number(a.rate).toLocaleString("en-IN")}</td>
-                              <td>
-                                {new Date(a.date).toLocaleString("en-IN", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-
-                                  hour12: true,
-                                })}
-                              </td>
+                      {loading ? (
+                        <div
+                          className="d-flex justify-content-center align-items-center"
+                          style={{ minHeight: "300px" }}
+                        >
+                          <div
+                            className="spinner-border text-primary"
+                            style={{ width: "4rem", height: "4rem" }}
+                            role="status"
+                          >
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <table
+                          id="attendanceTable"
+                          data-datatable="true"
+                          className="table table-striped table-bordered align-middle w-100"
+                        >
+                          <thead className="table-dark">
+                            <tr>
+                              <th>Site Name</th>
+                              <th>User</th>
+                              <th>Type</th>
+                              <th>Dihadi</th>
+                              <th>Date</th>
+                              <th>Action</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+
+                          <tbody>
+                            {attendance.length > 0 ? (
+                              attendance.map((a, i) => (
+                                <tr key={i}>
+                                  <td>{a.siteId?.siteName}</td>
+
+                                  <td>
+                                    {a.laberId?.name} S/O{" "}
+                                    {a.laberId?.fatherName}
+                                  </td>
+
+                                  <td>
+                                    <span
+                                      className={`badge ${
+                                        a.type === "1" ? "bg-danger" : "bg-info"
+                                      } text-white d-inline-flex align-items-center justify-content-center px-2 py-1`}
+                                    >
+                                      {a.type === "1" ? "गरम" : "ठंडी"}
+                                    </span>
+                                  </td>
+
+                                  <td>
+                                    ₹ {Number(a.rate).toLocaleString("en-IN")}
+                                  </td>
+
+                                  <td>
+                                    {new Date(a.date).toLocaleString("en-IN", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                      hour12: true,
+                                    })}
+                                  </td>
+                                   <td>
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteAttendance(a._id)}
+                                      className="btn btn-sm btn-outline-danger"
+                                    >
+                                      <i className="bi bi-trash"></i>
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <></>
+                            )}
+                          </tbody>
+                        </table>
+                      )}
                     </div>
                   </div>
                 </div>

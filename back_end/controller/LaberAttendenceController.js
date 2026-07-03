@@ -126,13 +126,29 @@ export const updateLaberAttendence = async (req, res) => {
 
 // delete attendance
 export const deleteLaberAttendence = async (req, res) => {
-    try {
-        const { laberId } = req.params;
-        const deletedAttendance = await attendenceModel.findOneAndDelete({ laberId });
-        res.status(200).send({ message: "Attendance deleted successfully", attendance: deletedAttendance });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const { id } = req.params;
+
+    const attendance = await attendenceModel.findByIdAndDelete(id);
+
+    if (!attendance) {
+      return res.status(404).json({
+        success: false,
+        message: "Attendance not found",
+      });
     }
+
+    res.status(200).json({
+      success: true,
+      message: "Attendance deleted successfully",
+      attendance,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 export const getAttendance = async (req, res) => {

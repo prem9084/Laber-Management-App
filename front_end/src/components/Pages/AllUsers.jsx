@@ -5,53 +5,37 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
 
-/*
-  NOTE: jQuery, DataTables JS/CSS aur Bootstrap ab globally
-  public/index.html me <head> me CDN se add kiye gaye hain.
-  Isliye yahan dynamic script loading ki zarurat nahi — seedha
-  window.jQuery use karenge.
-*/
-
-/* ================= DUMMY USERS DATA (replace with API / localStorage) ================= */
-
-
 function UsersPage() {
   const token = localStorage.getItem("token");
- const [users, setUsers] = useState([]);
-const getUser = async () => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const getUser = async () => {
     try {
-      try {
-        const { data } = await api.get(
-          "/api/auth/all-user",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        setUsers(data.users);
-      } catch (error) {
-        console.log(error);
-      }
+      setLoading(true);
+      const { data } = await api.get("/api/auth/all-user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUsers(data.users);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const deleteUser = async (userId) => {
     try {
-      const { data } = await api.delete(
-        `/api/auth/delete-user/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const { data } = await api.delete(`/api/auth/delete-user/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       if (data.success) {
         setUsers(users.filter((user) => user._id !== userId));
         toast.success(data.message);
-      }else{
+      } else {
         toast.error(data.message);
       }
     } catch (error) {
@@ -59,12 +43,15 @@ const getUser = async () => {
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     getUser();
-  }, [])
+  }, []);
   return (
     <Layout>
-      <div className="d-flex flex-column flex-md-row" style={{ minHeight: "100vh", marginTop: "9rem" }}>
+      <div
+        className="d-flex flex-column flex-md-row"
+        style={{ minHeight: "100vh", marginTop: "9rem" }}
+      >
         {/* Sidebar */}
         <Sidebar />
 
@@ -84,41 +71,80 @@ const getUser = async () => {
                 </div>
 
                 <div className="table-responsive">
-                  <table id="attendanceTable"
-                        data-datatable="true" className="table table-striped table-bordered align-middle w-100">
-                    <thead className="table-dark">
-                      <tr>
-                        <th>Name</th>
-                        <th>Mobile</th>
-                        <th>Role</th>
-                        <th>Address</th>
-                        
-                        <th>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((u, i) => (
-                        <tr key={i}>
-                          <td>{u.name} S/O {u.fatherName}</td>
-                          <td>{u.mobile}</td>
-                          <td>{u.role == "1" ? "Thekedar" : "Laber"}</td>
-                          <td>{u.address}</td>
-                        
-                          <td>
-                            <button type="button" className="btn btn-sm btn-outline-primary me-1">
-                              <i className="bi bi-eye"></i>
-                            </button>
-                            <button type="button" className="btn btn-sm btn-outline-warning me-1">
-                              <i className="bi bi-pencil"></i>
-                            </button>
-                            <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => deleteUser(u._id)}>
-                              <i className="bi bi-trash"></i>
-                            </button>
-                          </td>
+                  {loading ? (
+                    <div
+                      className="d-flex justify-content-center align-items-center"
+                      style={{ minHeight: "300px" }}
+                    >
+                      <div
+                        className="spinner-border text-primary"
+                        style={{ width: "4rem", height: "4rem" }}
+                        role="status"
+                      >
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <table
+                      id="attendanceTable"
+                      data-datatable="true"
+                      className="table table-striped table-bordered align-middle w-100"
+                    >
+                      <thead className="table-dark">
+                        <tr>
+                          <th>Name</th>
+                          <th>Mobile</th>
+                          <th>Role</th>
+                          <th>Address</th>
+                          <th>Action</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+
+                      <tbody>
+                        {users.length > 0 ? (
+                          users.map((u, i) => (
+                            <tr key={i}>
+                              <td>
+                                {u.name} S/O {u.fatherName}
+                              </td>
+
+                              <td>{u.mobile}</td>
+
+                              <td>{u.role === "1" ? "Thekedar" : "Laber"}</td>
+
+                              <td>{u.address}</td>
+
+                              <td>
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-primary me-1"
+                                >
+                                  <i className="bi bi-eye"></i>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-warning me-1"
+                                >
+                                  <i className="bi bi-pencil"></i>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-danger"
+                                  onClick={() => deleteUser(u._id)}
+                                >
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <></>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             </div>

@@ -7,20 +7,21 @@ import api from "../../api/axios";
 const FinalLaberSheet = () => {
   const [finalData, setFinalData] = useState([]);
   const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
 
   const fetchFinalData = async () => {
     try {
-      const { data } = await api.get(
-        "/api/attendence/final-sheet",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      setLoading(true);
+      const { data } = await api.get("/api/attendence/final-sheet", {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       setFinalData(data.data);
     } catch (error) {
       console.error("Error fetching final data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,77 +70,116 @@ const FinalLaberSheet = () => {
                         फाइनल रिकॉर्ड्स
                       </h5>
                       <button
-  className="btn btn-success"
-  onClick={() => window.open("/thekedar/laber-sheet", "_blank")}
->
-  <i className="bi bi-printer me-1"></i>
-  Print
-</button>
+                        className="btn btn-success"
+                        onClick={() =>
+                          window.open("/thekedar/laber-sheet", "_blank")
+                        }
+                      >
+                        <i className="bi bi-printer me-1"></i>
+                        Print
+                      </button>
                       {/* <span className="badge bg-dark fs-6">
                         Total: ₹{totalAmount.toLocaleString("en-IN")}
                       </span> */}
                     </div>
 
                     <div className="table-responsive">
-                      <table
-                        id="attendanceTable"
-                        data-datatable="true"
-                        className="table table-striped table-bordered align-middle w-100"
-                      >
-                        <thead className="table-dark">
-                          <tr>
-                            <th>मज़दूर का नाम</th>
-                            <th>साइट का नाम</th>
-                            <th>ठंडी की हाजिरी</th>
-                            <th>गरम की हाजिरी</th>
-                            <th>कुल बने</th>
-                            <th>खरचा</th>
-                            <th>बाकी</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {finalData.map((e, index) => (
-                            <tr key={index}>
-                              <td>
-                                {e.laberName} S/O {e.fatherName}
-                              </td>
-                              <td>{e.siteName}</td>
-
-                              <td>
-                                {e.thandiAttendance} × ₹{e.thandiRate} = ₹
-                                {e.thandiAmount}
-                              </td>
-
-                              <td>
-                                {e.garamAttendance} × ₹{e.garamRate} = ₹
-                                {e.garamAmount}
-                              </td>
-                              <td>₹ {e.totalIncome}</td>
-                              <td className="fw-bold text-danger">₹ {e.totalExpense}</td>
-                              <td className="fw-bold text-success">
-                                ₹ {e.baki}
-                              </td>
+                      {loading ? (
+                        <div
+                          className="d-flex justify-content-center align-items-center"
+                          style={{ minHeight: "300px" }}
+                        >
+                          <div
+                            className="spinner-border text-primary"
+                            style={{ width: "4rem", height: "4rem" }}
+                            role="status"
+                          >
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <table
+                          id="attendanceTable"
+                          data-datatable="true"
+                          className="table table-striped table-bordered align-middle w-100"
+                        >
+                          <thead className="table-dark">
+                            <tr>
+                              <th>मज़दूर का नाम</th>
+                              <th>साइट का नाम</th>
+                              <th>ठंडी की हाजिरी</th>
+                              <th>गरम की हाजिरी</th>
+                              <th>कुल बने</th>
+                              <th>खरचा</th>
+                              <th>बाकी</th>
                             </tr>
-                          ))}
-                        </tbody>
-                        <tfoot className="table-dark">
-                          <tr>
-                            <th colSpan="2" className="text-end">
-                              कुल
-                            </th>
+                          </thead>
 
-                            <th>{totals.thandiAttendance} हाजिरी</th>
+                          <tbody>
+                            {finalData.length > 0 ? (
+                              finalData.map((e, index) => (
+                                <tr key={index}>
+                                  <td>
+                                    {e.laberName} S/O {e.fatherName}
+                                  </td>
 
-                            <th>{totals.garamAttendance} हाजिरी</th>
+                                  <td>{e.siteName}</td>
 
-                            <th >₹ {totals.totalIncome}</th>
+                                  <td>
+                                    {e.thandiAttendance} × ₹{e.thandiRate} = ₹
+                                    {e.thandiAmount}
+                                  </td>
 
-                            <th className="fw-bold text-danger">₹ {totals.totalExpense}</th>
+                                  <td>
+                                    {e.garamAttendance} × ₹{e.garamRate} = ₹
+                                    {e.garamAmount}
+                                  </td>
 
-                            <th className="text-warning">₹ {totals.baki}</th>
-                          </tr>
-                        </tfoot>
-                      </table>
+                                  <td>₹ {e.totalIncome}</td>
+
+                                  <td className="fw-bold text-danger">
+                                    ₹ {e.totalExpense}
+                                  </td>
+
+                                  <td className="fw-bold text-success">
+                                    ₹ {e.baki}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan="7" className="text-center py-4">
+                                  कोई डेटा उपलब्ध नहीं है।
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+
+                          {finalData.length > 0 && (
+                            <tfoot className="table-dark">
+                              <tr>
+                                <th colSpan="2" className="text-end">
+                                  कुल
+                                </th>
+
+                                <th>{totals.thandiAttendance} हाजिरी</th>
+
+                                <th>{totals.garamAttendance} हाजिरी</th>
+
+                                <th>₹ {totals.totalIncome}</th>
+
+                                <th className="fw-bold text-danger">
+                                  ₹ {totals.totalExpense}
+                                </th>
+
+                                <th className="text-warning">
+                                  ₹ {totals.baki}
+                                </th>
+                              </tr>
+                            </tfoot>
+                          )}
+                        </table>
+                      )}
                     </div>
                   </div>
                 </div>

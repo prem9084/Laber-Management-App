@@ -21,43 +21,36 @@ function ExpensePage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [description, setDescription] = useState("");
   const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const getSite = async () => {
     try {
-      try {
-        const { data } = await api.get(
-          "/api/attendence/all_site",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        setSite(data.sites);
-      } catch (error) {
-        console.log(error);
-      }
+      setLoading(true);
+      const { data } = await api.get("/api/attendence/all_site", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setSite(data.sites);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const getUser = async () => {
     try {
-      try {
-        const { data } = await api.get(
-          "/api/auth/all-user",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-        setUsers(data.users);
-      } catch (error) {
-        console.log(error);
-      }
+      setLoading(true);
+      const { data } = await api.get("/api/auth/all-user", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUsers(data.users);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,17 +89,17 @@ function ExpensePage() {
 
   const getExpense = async () => {
     try {
-      const { data } = await api.get(
-        "/api/expenses/get-expenses",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      setLoading(true);
+      const { data } = await api.get("/api/expenses/get-expenses", {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
       setExpenses(data.expenses);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -117,6 +110,28 @@ function ExpensePage() {
   }, []);
 
   const totalAmount = expenses.reduce((sum, e) => sum + Number(e.Amount), 0);
+
+
+  const deleteExpense = async (id) => {
+    try {
+      setLoading(true);
+      const { data } = await api.delete(`api/expenses/delete-expense/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (data.success) {
+        toast.success(data.message);
+        getExpense();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Layout>
@@ -146,40 +161,71 @@ function ExpensePage() {
                     </div>
 
                     <div className="table-responsive">
-                      <table
-                        id="attendanceTable"
-                        data-datatable="true"
-                        className="table table-striped table-bordered align-middle w-100"
-                      >
-                        <thead className="table-dark">
-                          <tr>
-                            <th>Site Name</th>
-                            <th>User</th>
-                            <th>Amount</th>
-                            <th>Description</th>
-                            <th>Date</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {expenses.map((e, i) => (
-                            <tr key={i}>
-                              <td>{e.siteId?.siteName}</td>
-                              <td>{e.laberId?.name}</td>
-                              <td>
-                                <span className="badge bg-success">
-                                  ₹{Number(e.Amount).toLocaleString("en-IN")}
-                                </span>
-                              </td>
-                              <td>{e.description}</td>
-                              <td>
-                                {new Date(e.date).toLocaleString("en-IN", {
-                                  timeZone: "Asia/Kolkata",
-                                })}
-                              </td>{" "}
+                      {loading ? (
+                        <div
+                          className="d-flex justify-content-center align-items-center"
+                          style={{ height: "300px" }}
+                        >
+                          <div
+                            className="spinner-border text-primary"
+                            style={{ width: "4rem", height: "4rem" }}
+                            role="status"
+                          >
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <table
+                          id="attendanceTable"
+                          data-datatable="true"
+                          className="table table-striped table-bordered align-middle w-100"
+                        >
+                          <thead className="table-dark">
+                            <tr>
+                              <th>Site Name</th>
+                              <th>User</th>
+                              <th>Amount</th>
+                              <th>Description</th>
+                              <th>Date</th>
+                              <th>Action</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+
+                          <tbody>
+                            {expenses.length > 0 ? (
+                              expenses.map((e, i) => (
+                                <tr key={i}>
+                                  <td>{e.siteId?.siteName}</td>
+                                  <td>{e.laberId?.name}</td>
+                                  <td>
+                                    <span className="badge bg-success">
+                                      ₹
+                                      {Number(e.Amount).toLocaleString("en-IN")}
+                                    </span>
+                                  </td>
+                                  <td>{e.description}</td>
+                                  <td>
+                                    {new Date(e.date).toLocaleString("en-IN", {
+                                      timeZone: "Asia/Kolkata",
+                                    })}
+                                  </td>
+                                    <td>
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteExpense(e._id)}
+                                      className="btn btn-sm btn-outline-danger"
+                                    >
+                                      <i className="bi bi-trash"></i>
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <></>
+                            )}
+                          </tbody>
+                        </table>
+                      )}
                     </div>
                   </div>
                 </div>

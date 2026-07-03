@@ -158,6 +158,7 @@ export const getAllUser = async (req, res) => {
     res.status(200).json({
       success: true,
       users,
+      totalUsers: users.length,
     });
   } catch (error) {
     console.log(error);

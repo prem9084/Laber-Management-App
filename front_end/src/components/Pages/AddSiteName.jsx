@@ -2,106 +2,100 @@ import React, { useEffect, useRef, useState } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import Layout from "../HeadSection/Layout";
 import { toast } from "react-toastify";
-import axios from 'axios'
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import api from "../../api/axios";
 
-/*
-  NOTE: jQuery, DataTables JS/CSS aur Bootstrap globally
-  public/index.html me <head> me CDN se add kiye gaye hain.
-  Isliye yahan dynamic script loading ki zarurat nahi.
-*/
-
-/* ================= DUMMY SITES DATA (replace with API / localStorage) ================= */
-const initialSites = [
-  { site: "Site A - Meerut", date: "27-06-2026" },
-  { site: "Site B - Delhi", date: "28-06-2026" },
-  { site: "Site C - Noida", date: "29-06-2026" },
-];
-
 function SitePage() {
-  const [sites, setSites] = useState(initialSites);
   const [form, setForm] = useState({ site: "" });
-  const [sitename,setSitename] = useState('')
-  const [allsites,setAllsites] = useState([])
+  const [sitename, setSitename] = useState("");
+  const [allsites, setAllsites] = useState([]);
   const token = localStorage.getItem("token");
+  const [loading, setLoading] = useState(true);
+  const [btnLoading, setBtnLoading] = useState(false);
 
-const navigate = useNavigate()
- const handleSite = async (e) => {
-  e.preventDefault();
-
-  try {
-    
-
-    const { data } = await api.post(
-      "/api/attendence/add_site",
-      {siteName: sitename },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+  const navigate = useNavigate();
+  const handleSite = async (e) => {
+    e.preventDefault();
+    try {
+      setBtnLoading(true);
+      const { data } = await api.post(
+        "/api/attendence/add_site",
+        { siteName: sitename },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
       }
-    );
-
-    if (data.success) {
-      toast.success(data.message);
-    } else {
-      toast.error(data.message);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setBtnLoading(false);
     }
-  } catch (error) {
-    toast.error(error.response?.data?.message || error.message);
-  }
-};
+  };
 
-// get All sites
+  // get All sites
 
-const AllSites = async()=>{
-  try {
-    const {data} = await api.get("/api/attendence/all_site", {
+  const AllSites = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get("/api/attendence/all_site", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      })
-    setAllsites(data.sites)
-    console.log(data.sites);
-    
-  } catch (error) {
-    console.log(error);
-    
-  }
-}
-const deleteSites = async(id)=>{
-  try {
-    const {data} = await api.delete(`/api/attendence/delete-site/${id}`, {
+      });
+      setAllsites(data.sites);
+      
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const deleteSites = async (id) => {
+    try {
+      setLoading(true);
+      const { data } = await api.delete(`/api/attendence/delete-site/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      })
-    if(data.success){
-      toast.success(data.message)
-      navigate('/thekedar/site_name')
-    }else{
-      toast.error(data.message)
+      });
+      if (data.success) {
+        toast.success(data.message);
+        navigate("/thekedar/site_name");
+           setAllsites((prev) => prev.filter((item) => item._id !== id));
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
     }
-    
-  } catch (error) {
-    console.log(error);
-    
-  }
-}
+  };
 
-useEffect(()=>{
-  AllSites()
-},[])
+  useEffect(() => {
+    AllSites();
+  }, []);
 
-// useEffect(() => {
-//   if (allsites && allsites.length > 0) {
-//     initDataTable("attendanceTable", allsites);
-//   }
-// }, [allsites]);
+  // useEffect(() => {
+  //   if (allsites && allsites.length > 0) {
+  //     initDataTable("attendanceTable", allsites);
+  //   }
+  // }, [allsites]);
   return (
     <Layout>
-      <div className="d-flex flex-column flex-md-row" style={{ minHeight: "100vh", marginTop: "9rem" }}>
+      <div
+        className="d-flex flex-column flex-md-row"
+        style={{ minHeight: "100vh", marginTop: "9rem" }}
+      >
         {/* Sidebar */}
         <Sidebar />
 
@@ -119,31 +113,62 @@ useEffect(()=>{
                     </h5>
 
                     <div className="table-responsive">
-                      <table id="attendanceTable"
-                        data-datatable="true" className="table table-striped table-bordered align-middle w-100">
-                        <thead className="table-dark">
-                          <tr>
-                            <th>Site Name</th>
-                            <th>Date Added</th>
-                            <th>Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {allsites.map((s, i) => (
-                            <tr key={i}>
-                              <td>{s.siteName}</td>
-                              <td>{new Date(s.createdAt).toLocaleDateString()}</td>
-                              <td>
-
-
-                              <button type="button" onClick={()=>deleteSites(s._id)} className="btn btn-sm btn-outline-danger">
-                              <i className="bi bi-trash"></i>
-                            </button>
-                              </td>
+                      {loading ? (
+                        <div
+                          className="d-flex justify-content-center align-items-center"
+                          style={{ minHeight: "300px" }}
+                        >
+                          <div
+                            className="spinner-border text-primary"
+                            style={{ width: "4rem", height: "4rem" }}
+                            role="status"
+                          >
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <table
+                          id="attendanceTable"
+                          data-datatable="true"
+                          className="table table-striped table-bordered align-middle w-100"
+                        >
+                          <thead className="table-dark">
+                            <tr>
+                              <th>Site Name</th>
+                              <th>Date Added</th>
+                              <th>Action</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+
+                          <tbody>
+                            {allsites.length > 0 ? (
+                              allsites.map((s, i) => (
+                                <tr key={i}>
+                                  <td>{s.siteName}</td>
+                                  <td>
+                                    {new Date(s.createdAt).toLocaleDateString()}
+                                  </td>
+                                  <td>
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteSites(s._id)}
+                                      className="btn btn-sm btn-outline-danger"
+                                    >
+                                      <i className="bi bi-trash"></i>
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan="3" className="text-center py-4">
+                                  No Data Found
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -157,14 +182,17 @@ useEffect(()=>{
                       <i className="bi bi-plus-circle-fill me-2 text-warning"></i>
                       Add Site
                     </h5>
-                    <small className="text-white-50">Enter new site details</small>
+                    <small className="text-white-50">
+                      Enter new site details
+                    </small>
                   </div>
 
                   <div className="card-body p-4">
                     <form onSubmit={handleSite}>
                       <div className="mb-4">
                         <label className="form-label fw-semibold text-secondary">
-                          <i className="bi bi-geo-alt-fill text-warning me-1"></i>Site Name
+                          <i className="bi bi-geo-alt-fill text-warning me-1"></i>
+                          Site Name
                         </label>
                         <div className="input-group">
                           <span className="input-group-text bg-light">
@@ -175,7 +203,7 @@ useEffect(()=>{
                             className="form-control"
                             name="siteName"
                             value={sitename}
-                            onChange={(e)=>setSitename(e.target.value)}
+                            onChange={(e) => setSitename(e.target.value)}
                             placeholder="Enter site name"
                             required
                           />
@@ -184,8 +212,25 @@ useEffect(()=>{
 
                       <hr className="my-4" />
 
-                      <button type="submit" className="btn btn-warning fw-bold w-100 py-2">
-                        <i className="bi bi-check-circle-fill me-2"></i>Add Site
+                      <button
+                        type="submit"
+                        className="btn btn-warning fw-bold w-100 py-2"
+                        disabled={btnLoading}
+                      >
+                        {btnLoading ? (
+                          <>
+                            <span
+                              className="spinner-border spinner-border-sm me-2"
+                              role="status"
+                            ></span>
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <i className="bi bi-check-circle-fill me-2"></i>
+                            Add Site
+                          </>
+                        )}
                       </button>
                     </form>
                   </div>
