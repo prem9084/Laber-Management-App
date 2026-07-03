@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Layout from "../HeadSection/Layout";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -6,8 +6,8 @@ import { toast } from "react-toastify";
 import { redirect } from "react-router-dom";
 import api from "../../api/axios.js";
 const Login = () => {
-  const [mobile, setMobile] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const [mobile, setMobile] = useState("");
+  const [password, setPassword] = useState("");
   const [btnLoading, setBtnLoading] = useState(false);
   const navigate = useNavigate();
 
