@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import Layout from "../HeadSection/Layout";
-import axios from "axios";
 import { toast } from "react-toastify";
 import api from "../../api/axios";
+import $ from "jquery";
+import { useNavigate } from "react-router-dom";
+
 function AttendancePage() {
   const token = localStorage.getItem("token");
   const [type, setType] = useState("");
@@ -14,8 +16,13 @@ function AttendancePage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [rate, setRate] = useState("");
   const [attendance, setAttendance] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
+
+  const tableRef = useRef(null);
+  const dtRef = useRef(null);
+  const navigate = useNavigate();
 
   const submitAttendance = async (e) => {
     e.preventDefault();
@@ -24,23 +31,18 @@ function AttendancePage() {
       setBtnLoading(true);
       const { data } = await api.post(
         "/api/attendence/insert_intendence",
-        {
-          siteId,
-          laberId,
-          date,
-          type,
-          rate,
-          status: "present",
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        { siteId, laberId, date, type, rate, status: "present" },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (data.success) {
         toast.success(data.message);
+        setSiteId("");
+        setLaberId("");
+        setRate("");
+        setType("");
+        setDate(new Date().toISOString().slice(0, 10));
+     
       } else {
         toast.error(data.message);
       }
@@ -51,13 +53,12 @@ function AttendancePage() {
       setBtnLoading(false);
     }
   };
+
   const getSite = async () => {
     try {
       setLoading(true);
       const { data } = await api.get("/api/attendence/all_site", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setSite(data.sites);
     } catch (error) {
@@ -69,61 +70,49 @@ function AttendancePage() {
 
   const getUser = async () => {
     try {
-      try {
-        const { data } = await api.get("/api/auth/all-user", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setUsers(data.users);
-      } catch (error) {
-        console.log(error);
-      }
+      setLoading(true);
+      const { data } = await api.get("/api/auth/all-user", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers(data.users);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // silent = true → data refresh ho jaye but table/spinner screen se hataya na jaye
   const getAttendance = async () => {
     try {
-      setLoading(true);
+       setLoading(true);
       const { data } = await api.get("/api/attendence/attendance", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setAttendance(data.attendance);
     } catch (error) {
       console.log(error);
     } finally {
-      setLoading(false);
+       setLoading(false);
     }
   };
 
- 
-
+  // ---- Delete attendance (safe — only updates state) ----
   const deleteAttendance = async (id) => {
     try {
-      setLoading(true);
       const { data } = await api.delete(
         `/api/attendence/delete-attendance/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
+
       if (data.success) {
         toast.success(data.message);
-        getAttendance(); // Refresh the attendance list
+        setAttendance((prev) => prev.filter((e) => e._id !== id));
       } else {
         toast.error(data.message);
       }
     } catch (error) {
       console.log(error);
-      toast.error(error.response?.data?.message || "Something went wrong");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -133,17 +122,34 @@ function AttendancePage() {
     getAttendance();
   }, []);
 
+  // ---- Same safe DataTable logic as ExpensePage/UsersPage/SitePage ----
   useEffect(() => {
-    if (attendance.length > 0) {
-      const table = $("#attendanceTable");
-  
-      if ($.fn.DataTable.isDataTable("#attendanceTable")) {
-        table.DataTable().destroy();
+    const tableId = "#attendanceTable";
+
+    if (!attendance || attendance.length === 0) return;
+
+    const timer = setTimeout(() => {
+      // destroy old instance safely — NO "true" here, otherwise the
+      // <table> node itself gets removed from the DOM and the table
+      // disappears permanently on the next state update.
+      if ($.fn.DataTable.isDataTable(tableId)) {
+        $(tableId).DataTable().destroy();
       }
-  
-      table.DataTable();
-    }
-  }, [attendance]);
+
+      dtRef.current = $(tableId).DataTable({
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        pageLength: 10,
+        destroy: true,
+        autoWidth: false,
+        responsive: true,
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [attendance.length]); // 👈 same fix as ExpensePage / UsersPage / SitePage
 
   return (
     <Layout>
@@ -151,10 +157,8 @@ function AttendancePage() {
         className="d-flex flex-column flex-md-row"
         style={{ minHeight: "100vh", marginTop: "9rem" }}
       >
-        {/* Sidebar */}
         <Sidebar />
 
-        {/* Content */}
         <div className="flex-grow-1 bg-light">
           <div className="container-fluid px-3 px-md-4 py-4">
             <div className="row g-4">
@@ -167,16 +171,13 @@ function AttendancePage() {
                         <i className="bi bi-cash-coin me-2 text-warning"></i>
                         Attendence Records
                       </h5>
-                      {/* <span className="badge bg-dark fs-6">
-                        Total: ₹{totalAmount.toLocaleString("en-IN")}
-                      </span> */}
                     </div>
 
                     <div className="table-responsive">
                       {loading ? (
                         <div
                           className="d-flex justify-content-center align-items-center"
-                          style={{ minHeight: "300px" }}
+                          style={{ height: "300px" }}
                         >
                           <div
                             className="spinner-border text-primary"
@@ -189,6 +190,7 @@ function AttendancePage() {
                       ) : (
                         <table
                           id="attendanceTable"
+                          ref={tableRef}
                           data-datatable="true"
                           className="table table-striped table-bordered align-middle w-100"
                         >
@@ -208,12 +210,9 @@ function AttendancePage() {
                               attendance.map((a, i) => (
                                 <tr key={i}>
                                   <td>{a.siteId?.siteName}</td>
-
                                   <td>
-                                    {a.laberId?.name} S/O{" "}
-                                    {a.laberId?.fatherName}
+                                    {a.laberId?.name} S/O {a.laberId?.fatherName}
                                   </td>
-
                                   <td>
                                     <span
                                       className={`badge ${
@@ -223,11 +222,7 @@ function AttendancePage() {
                                       {a.type === "1" ? "गरम" : "ठंडी"}
                                     </span>
                                   </td>
-
-                                  <td>
-                                    ₹ {Number(a.rate).toLocaleString("en-IN")}
-                                  </td>
-
+                                  <td>₹ {Number(a.rate).toLocaleString("en-IN")}</td>
                                   <td>
                                     {new Date(a.date).toLocaleString("en-IN", {
                                       day: "2-digit",
@@ -266,9 +261,7 @@ function AttendancePage() {
                       <i className="bi bi-calendar2-check me-2 text-warning"></i>
                       Mark Attendance
                     </h5>
-                    <small className="text-white-50">
-                      Fill the details below
-                    </small>
+                    <small className="text-white-50">Fill the details below</small>
                   </div>
 
                   <div className="card-body p-4">
@@ -289,7 +282,6 @@ function AttendancePage() {
                             onChange={(e) => setSiteId(e.target.value)}
                           >
                             <option value="">-- Select Site --</option>
-
                             {site.map((s) => (
                               <option key={s._id} value={s._id}>
                                 {s.siteName}
@@ -315,7 +307,6 @@ function AttendancePage() {
                             onChange={(e) => setLaberId(e.target.value)}
                           >
                             <option value="">-- Select User --</option>
-
                             {users.map((u) => (
                               <option key={u._id} value={u._id}>
                                 {u.name} S/O {u.fatherName}
@@ -324,6 +315,7 @@ function AttendancePage() {
                           </select>
                         </div>
                       </div>
+
                       <div className="mb-4">
                         <label className="form-label fw-semibold text-secondary small text-uppercase mb-2">
                           <i className="bi bi-cash-coin text-warning me-1"></i>
@@ -342,6 +334,7 @@ function AttendancePage() {
                           />
                         </div>
                       </div>
+
                       <div className="mb-4">
                         <label className="form-label fw-semibold text-secondary small text-uppercase mb-2">
                           <i className="bi bi-calendar3 text-warning me-1"></i>
@@ -360,6 +353,7 @@ function AttendancePage() {
                           />
                         </div>
                       </div>
+
                       <div className="mb-2">
                         <label className="form-label fw-semibold text-secondary small text-uppercase mb-2">
                           <i className="bi bi-thermometer-half text-warning me-1"></i>
@@ -367,7 +361,6 @@ function AttendancePage() {
                         </label>
                         <div className="btn-group w-100" role="group">
                           <div className="d-flex gap-3 w-100">
-                            {/* Thandi */}
                             <input
                               type="radio"
                               className="btn-check"
@@ -378,7 +371,6 @@ function AttendancePage() {
                               onChange={(e) => setType(e.target.value)}
                               autoComplete="off"
                             />
-
                             <label
                               htmlFor="type-0"
                               className="btn btn-outline-info fw-semibold rounded-3 flex-fill py-2 type-btn"
@@ -387,7 +379,6 @@ function AttendancePage() {
                               Thandi
                             </label>
 
-                            {/* Garam */}
                             <input
                               type="radio"
                               className="btn-check"
@@ -437,18 +428,11 @@ function AttendancePage() {
               </div>
 
               <style>{`
-                .attendance-card {
-                  border-radius: 16px;
-                }
-
+                .attendance-card { border-radius: 16px; }
                 .attendance-header {
                   background: linear-gradient(135deg, #1f2333 0%, #2c3148 60%, #1a1d29 100%);
                 }
-
-                .input-group-modern {
-                  flex-wrap: nowrap;
-                }
-
+                .input-group-modern { flex-wrap: nowrap; }
                 .input-group-modern .input-group-text {
                   border: 1.5px solid #e7e9ee;
                   border-right: none;
@@ -461,7 +445,6 @@ function AttendancePage() {
                   justify-content: center;
                   padding: 0;
                 }
-
                 .input-group-modern .form-select,
                 .input-group-modern .form-control {
                   border: 1.5px solid #e7e9ee;
@@ -472,27 +455,20 @@ function AttendancePage() {
                   width: 1%;
                   min-width: 0;
                 }
-
                 .input-group-modern .form-select:focus,
                 .input-group-modern .form-control:focus {
                   box-shadow: none;
                   border-color: #ffc107;
                 }
-
                 .input-group-modern:focus-within .input-group-text {
                   border-color: #ffc107;
                 }
-
-                .type-btn {
-                  transition: all 0.15s ease;
-                }
-
+                .type-btn { transition: all 0.15s ease; }
                 .submit-btn {
                   border-radius: 12px;
                   box-shadow: 0 6px 16px rgba(255, 193, 7, 0.35);
                   transition: transform 0.15s ease, box-shadow 0.15s ease;
                 }
-
                 .submit-btn:hover {
                   transform: translateY(-1px);
                   box-shadow: 0 8px 20px rgba(255, 193, 7, 0.45);

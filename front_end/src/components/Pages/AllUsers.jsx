@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import Layout from "../HeadSection/Layout";
 import { toast } from "react-toastify";
 import api from "../../api/axios.js";
-import { useNavigate } from "react-router-dom";
+import $ from "jquery";
 
 function UsersPage() {
   const token = localStorage.getItem("token");
@@ -13,14 +13,17 @@ function UsersPage() {
   const [showModal, setShowModal] = useState(false);
 
   const [name, setName] = useState("");
-    const [fatherName, setFatherName] = useState("");
-    const [mobile, setMobile] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [address, setAddress] = useState("");
-    const [btnLoading, setBtnLoading] = useState(false);
+  const [fatherName, setFatherName] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [address, setAddress] = useState("");
+  const [btnLoading, setBtnLoading] = useState(false);
   const [errors, setErrors] = useState({});
-const navigate = useNavigate();
+
+  const tableRef = useRef(null);
+  const dtRef = useRef(null);
+
   // ---- Fetch all users ----
   const getUser = async () => {
     try {
@@ -42,9 +45,13 @@ const navigate = useNavigate();
       const { data } = await api.delete(`/api/auth/delete-user/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       if (data.success) {
-        setUsers(users.filter((user) => user._id !== userId));
         toast.success(data.message);
+
+        // ❌ DO NOT manually clear/redraw here
+        // ✔ only update state — the useEffect below rebuilds the DataTable
+        setUsers((prev) => prev.filter((u) => u._id !== userId));
       } else {
         toast.error(data.message);
       }
@@ -53,21 +60,13 @@ const navigate = useNavigate();
     }
   };
 
-  // ---- Form handlers ----
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" }));
-  };
-
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.fatherName.trim())
-      newErrors.fatherName = "Father's name is required";
-    if (!formData.mobile.trim()) newErrors.mobile = "Mobile number is required";
-    if (!formData.address.trim()) newErrors.address = "Address is required";
-    if (!formData.password || formData.password.length < 6)
+    if (!name.trim()) newErrors.name = "Name is required";
+    if (!fatherName.trim()) newErrors.fatherName = "Father's name is required";
+    if (!mobile.trim()) newErrors.mobile = "Mobile number is required";
+    if (!address.trim()) newErrors.address = "Address is required";
+    if (!password || password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -75,56 +74,72 @@ const navigate = useNavigate();
 
   const closeModal = () => {
     setShowModal(false);
-    setFormData({
-      name: "",
-      fatherName: "",
-      password: "",
-      address: "",
-      mobile: "",
-    });
+    setName("");
+    setFatherName("");
+    setMobile("");
+    setEmail("");
+    setPassword("");
+    setAddress("");
     setErrors({});
   };
 
   async function handleSubmit(e) {
     e.preventDefault();
+    if (!validateForm()) return;
+
     try {
       setBtnLoading(true);
-      const { data } = await api.post("/api/auth/register", {
-        name,
-        fatherName,
-        mobile,
-        email,
-        password,
-        address,
-      });
+      const { data } = await api.post(
+        "/api/auth/register",
+        { name, fatherName, mobile, email, password, address },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       if (data.success) {
         toast.success(data.message);
-        setShowModal(false);
+        closeModal();
       } else {
         toast.error(data.message);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
     } finally {
-        setBtnLoading(false);
-      }
+      setBtnLoading(false);
+    }
   }
 
   useEffect(() => {
     getUser();
   }, []);
 
+  // ---- Same DataTable logic as AttendancePage, with the destroy(true) bug fixed ----
   useEffect(() => {
-  if (users.length > 0) {
-    const table = $("#attendanceTable");
+    const tableId = "#attendanceTable";
 
-    if ($.fn.DataTable.isDataTable("#attendanceTable")) {
-      table.DataTable().destroy();
-    }
+    if (!users || users.length === 0) return;
 
-    table.DataTable();
-  }
-}, [users]);
+    // wait DOM render complete
+    const timer = setTimeout(() => {
+      // destroy old instance safely — DO NOT pass "true", it removes the
+      // <table> node from the DOM entirely and breaks React's reference to it
+      if ($.fn.DataTable.isDataTable(tableId)) {
+        $(tableId).DataTable().destroy();
+      }
+
+      // init fresh
+      dtRef.current = $(tableId).DataTable({
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        pageLength: 10,
+        destroy: true,
+        autoWidth: false,
+        responsive: true,
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [users.length]); // 👈 same fix as AttendancePage
 
   return (
     <Layout>
@@ -132,10 +147,8 @@ const navigate = useNavigate();
         className="d-flex flex-column flex-md-row"
         style={{ minHeight: "100vh", marginTop: "9rem" }}
       >
-        {/* Sidebar */}
         <Sidebar />
 
-        {/* Content */}
         <div className="flex-grow-1 bg-light">
           <div className="container-fluid px-3 px-md-4 py-4">
             <div className="card border-0 shadow-sm">
@@ -171,7 +184,7 @@ const navigate = useNavigate();
                   ) : (
                     <table
                       id="attendanceTable"
-                      data-datatable="true"
+                      ref={tableRef}
                       className="table table-striped table-bordered align-middle w-100"
                     >
                       <thead className="table-dark">
@@ -240,18 +253,12 @@ const navigate = useNavigate();
           <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div
               className="modal-content border-0 shadow-lg"
-              style={{
-                borderRadius: "16px",
-                overflow: "hidden",
-                maxHeight: "90vh",
-              }}
+              style={{ borderRadius: "16px", overflow: "hidden", maxHeight: "90vh" }}
             >
-              {/* Header */}
               <div
                 className="modal-header border-0 text-white"
                 style={{
-                  background:
-                    "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                  background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
                   padding: "1.5rem 1.75rem",
                 }}
               >
@@ -271,23 +278,12 @@ const navigate = useNavigate();
                 ></button>
               </div>
 
-              {/* Form */}
-              <form
-                onSubmit={handleSubmit}
-                className="d-flex flex-column"
-                style={{ minHeight: 0 }}
-              >
-                <div
-                  className="modal-body p-4"
-                  style={{ overflowY: "auto", maxHeight: "60vh" }}
-                >
-                  {/* Name */}
+              <form onSubmit={handleSubmit} className="d-flex flex-column" style={{ minHeight: 0 }}>
+                <div className="modal-body p-4" style={{ overflowY: "auto", maxHeight: "60vh" }}>
                   <div className="form-floating mb-3">
                     <input
                       type="text"
-                      className={`form-control ${
-                        errors.name ? "is-invalid" : ""
-                      }`}
+                      className={`form-control ${errors.name ? "is-invalid" : ""}`}
                       id="userName"
                       name="name"
                       placeholder="मज़दूर का पूरा नाम"
@@ -298,18 +294,13 @@ const navigate = useNavigate();
                       <i className="bi bi-person me-2 text-warning"></i>
                       मज़दूर का पूरा नाम
                     </label>
-                    {errors.name && (
-                      <div className="invalid-feedback">{errors.name}</div>
-                    )}
+                    {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                   </div>
 
-                  {/* Father's Name */}
                   <div className="form-floating mb-3">
                     <input
                       type="text"
-                      className={`form-control ${
-                        errors.fatherName ? "is-invalid" : ""
-                      }`}
+                      className={`form-control ${errors.fatherName ? "is-invalid" : ""}`}
                       id="fatherName"
                       name="fatherName"
                       placeholder="पिता का नाम"
@@ -320,20 +311,13 @@ const navigate = useNavigate();
                       <i className="bi bi-people me-2 text-warning"></i>
                       पिता का नाम
                     </label>
-                    {errors.fatherName && (
-                      <div className="invalid-feedback">
-                        {errors.fatherName}
-                      </div>
-                    )}
+                    {errors.fatherName && <div className="invalid-feedback">{errors.fatherName}</div>}
                   </div>
 
-                  {/* Mobile */}
                   <div className="form-floating mb-3">
                     <input
                       type="text"
-                      className={`form-control ${
-                        errors.mobile ? "is-invalid" : ""
-                      }`}
+                      className={`form-control ${errors.mobile ? "is-invalid" : ""}`}
                       id="mobile"
                       name="mobile"
                       placeholder="मज़दूर का मोबाइल नंबर"
@@ -344,18 +328,13 @@ const navigate = useNavigate();
                       <i className="bi bi-telephone me-2 text-warning"></i>
                       मज़दूर का मोबाइल नंबर
                     </label>
-                    {errors.mobile && (
-                      <div className="invalid-feedback">{errors.mobile}</div>
-                    )}
+                    {errors.mobile && <div className="invalid-feedback">{errors.mobile}</div>}
                   </div>
 
-                  {/* Address */}
                   <div className="form-floating mb-3">
                     <input
                       type="text"
-                      className={`form-control ${
-                        errors.address ? "is-invalid" : ""
-                      }`}
+                      className={`form-control ${errors.address ? "is-invalid" : ""}`}
                       id="address"
                       name="address"
                       placeholder="गाँव का नाम"
@@ -366,26 +345,18 @@ const navigate = useNavigate();
                       <i className="bi bi-geo-alt me-2 text-warning"></i>
                       गाँव का नाम
                     </label>
-                    {errors.address && (
-                      <div className="invalid-feedback">{errors.address}</div>
-                    )}
+                    {errors.address && <div className="invalid-feedback">{errors.address}</div>}
                   </div>
 
-                  {/* Password */}
                   <div className="mb-1">
-                    <label
-                      htmlFor="userPassword"
-                      className="form-label fw-semibold small"
-                    >
+                    <label htmlFor="userPassword" className="form-label fw-semibold small">
                       <i className="bi bi-lock me-1 text-warning"></i>
                       पासवर्ड
                     </label>
                     <div className="input-group">
                       <input
                         type={showPassword ? "text" : "password"}
-                        className={`form-control ${
-                          errors.password ? "is-invalid" : ""
-                        }`}
+                        className={`form-control ${errors.password ? "is-invalid" : ""}`}
                         id="userPassword"
                         name="password"
                         placeholder="पासवर्ड डालें"
@@ -397,23 +368,14 @@ const navigate = useNavigate();
                         className="input-group-text"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        <i
-                          className={`bi ${
-                            showPassword ? "bi-eye-slash" : "bi-eye"
-                          }`}
-                        />
+                        <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`} />
                       </button>
-                      {errors.password && (
-                        <div className="invalid-feedback">
-                          {errors.password}
-                        </div>
-                      )}
+                      {errors.password && <div className="invalid-feedback">{errors.password}</div>}
                     </div>
                   </div>
                   <small className="text-muted">न्यूनतम 6 अक्षर</small>
                 </div>
 
-                {/* Footer stays outside the scroll area, always visible */}
                 <div className="modal-footer border-0 px-4 pb-4 pt-3">
                   <button
                     type="button"
@@ -424,17 +386,10 @@ const navigate = useNavigate();
                     <i className="bi bi-x-lg me-1"></i>
                     रद्द करें
                   </button>
-                  <button
-                    type="submit"
-                    className="btn btn-warning fw-semibold px-4"
-                    disabled={btnLoading}
-                  >
+                  <button type="submit" className="btn btn-warning fw-semibold px-4" disabled={btnLoading}>
                     {btnLoading ? (
                       <>
-                        <span
-                          className="spinner-border spinner-border-sm me-2"
-                          role="status"
-                        ></span>
+                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
                         मज़दूर जोड़ा जा रहा है...
                       </>
                     ) : (
@@ -449,7 +404,7 @@ const navigate = useNavigate();
             </div>
           </div>
         </div>
-              )}
+      )}
     </Layout>
   );
 }

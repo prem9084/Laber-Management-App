@@ -119,40 +119,32 @@ const SidebarContent = ({ onNavClick }) => {
     .join("");
 
   // ✅ Yahan rakho
-  const navItems = [
-    
-    
-    ...(user?.role === "1"
-      ? [
-        { icon: "bi-house-fill", label: "Home", path: "/thekedar/dashboard" },
-          { icon: "bi-people-fill", label: "Users", path: "/thekedar/users" },
-          {
-            icon: "bi-person-badge-fill",
-            label: "Attendence",
-            path: "/thekedar/attendence",
-          },
-          
+ const navItems = [
+  ...(user?.role === "1"
+    ? [
+        { icon: "bi-house-fill", label: "होम", path: "/thekedar/dashboard" },
+        { icon: "bi-people-fill", label: "सभी मज़दूर", path: "/thekedar/users" },
+        {
+          icon: "bi-person-badge-fill",
+          label: "हाज़िरी लगाएँ",
+          path: "/thekedar/attendence",
+        },
+        { icon: "bi-cash-stack", label: "मज़दूर का खर्च जोड़ें", path: "/thekedar/expence" },
+        { icon: "bi-building", label: "साइट जोड़ें", path: "/thekedar/site_name" },
+        { icon: "bi-file-earmark-text", label: "हिसाब की लिस्ट", path: "/thekedar/final_sheet" },
+        { icon: "bi-person-fill", label: "प्रोफ़ाइल", path: "/thekedar/profile" },
+      ]
+    : []),
 
-          { icon: "bi-gear-fill", label: "Expences", path: "/thekedar/expence" },
-          { icon: "bi-gear-fill", label: "Add Site", path: "/thekedar/site_name" },
-          { icon: "bi-gear-fill", label: "Final Sheet", path: "/thekedar/final_sheet" },
-          { icon: "bi-person-fill", label: "Profile", path: "/thekedar/profile" },
-        ]
-      : []),
-
-    ...(user?.role === "0"
-      ? [
-         { icon: "bi-house-fill", label: "Home", path: "/laber/dashboard" },
-        { icon: "bi-bag-fill", label: "My Attendence", path: "/laber/myattendence" },
-        { icon: "bi-bag-fill", label: "My Expenses", path: "/laber/myexpence" },
-        { icon: "bi-person-fill", label: "Profile", path: "/laber/profile" },
-      
-]
-      : [])
-
-    
-    
-  ];
+  ...(user?.role === "0"
+    ? [
+        { icon: "bi-house-fill", label: "होम", path: "/laber/dashboard" },
+        { icon: "bi-calendar-check", label: "मेरी हाज़िरी", path: "/laber/myattendence" },
+        { icon: "bi-cash-coin", label: "मेरे खर्च", path: "/laber/myexpence" },
+        { icon: "bi-person-fill", label: "प्रोफ़ाइल", path: "/laber/profile" },
+      ]
+    : []),
+];
 
   const handleNav = (path) => {
     navigate(path);
@@ -249,7 +241,7 @@ const SidebarContent = ({ onNavClick }) => {
           }}
         >
           <i className="bi bi-box-arrow-left" style={{ fontSize: 15 }}></i>
-          Sign out
+          LOG OUT
         </button>
       </div>
     </div>

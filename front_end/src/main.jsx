@@ -4,16 +4,19 @@ import { BrowserRouter } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 
 import "bootstrap-icons/font/bootstrap-icons.css";
+
+/* DataTables CSS (ONLY bootstrap5 version) */
 import "datatables.net-bs5/css/dataTables.bootstrap5.min.css";
 import "datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css";
 
 import "./index.css";
 
+/* jQuery */
 import $ from "jquery";
 window.$ = $;
 window.jQuery = $;
 
-import "datatables.net";
+/* DataTables JS */
 import "datatables.net-bs5";
 import "datatables.net-responsive-bs5";
 

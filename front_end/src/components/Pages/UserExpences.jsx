@@ -58,6 +58,7 @@ function ExpensePage() {
   const laberExpenses = async (e) => {
     e.preventDefault();
     try {
+      setBtnLoading(true)
       const { data } = await api.post(
         "/api/expenses/insert_expense",
         {
@@ -85,54 +86,77 @@ function ExpensePage() {
       }
     } catch (error) {
       console.log(error);
+    }finally{
+      setBtnLoading(false)
     }
   };
 
-  const getExpense = async () => {
-    try {
-      setLoading(true);
-      const { data } = await api.get("/api/expenses/get-expenses", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setExpenses(data.expenses);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const getExpense = async (showLoader = false) => {
+  try {
+    if (showLoader) setLoading(true);
 
-  useEffect(() => {
-    getSite();
-    getUser();
-    getExpense();
-  }, []);
+    const { data } = await api.get("/api/expenses/get-expenses", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setExpenses((prev) => {
+      if (JSON.stringify(prev) !== JSON.stringify(data.expenses)) {
+        return data.expenses;
+      }
+      return prev;
+    });
+
+  } catch (err) {
+    console.log(err);
+  } finally {
+    if (showLoader) setLoading(false);
+  }
+};
+
+
+// useEffect(()=>{
+// getSite();
+// getUser()
+// })
+
+useEffect(() => {
+  getSite();
+  getUser()
+  getExpense(true);
+
+  const interval = setInterval(() => {
+    getExpense(false);
+  }, 4000);
+
+  return () => clearInterval(interval);
+}, []);
 
   const totalAmount = expenses.reduce((sum, e) => sum + Number(e.Amount), 0);
 
-  const deleteExpense = async (id) => {
-    try {
-      setLoading(true);
-      const { data } = await api.delete(`api/expenses/delete-expense/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (data.success) {
-        toast.success(data.message);
-        getExpense();
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+const deleteExpense = async (id, showLoader = false) => {
+  try {
+    if (showLoader) setLoading(true);
 
+    const { data } = await api.delete(`/api/expenses/delete-expense/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (data.success) {
+      toast.success(data.message);
+      getExpense(false); // table refresh
+    } else {
+      toast.error(data.message);
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    if (showLoader) setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (expenses.length > 0) {
