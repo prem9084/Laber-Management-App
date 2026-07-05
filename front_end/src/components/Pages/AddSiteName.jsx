@@ -52,7 +52,6 @@ function SitePage() {
         },
       });
       setAllsites(data.sites);
-      
     } catch (error) {
       console.log(error);
     } finally {
@@ -70,7 +69,7 @@ function SitePage() {
       if (data.success) {
         toast.success(data.message);
         navigate("/thekedar/site_name");
-           setAllsites((prev) => prev.filter((item) => item._id !== id));
+        setAllsites((prev) => prev.filter((item) => item._id !== id));
       } else {
         toast.error(data.message);
       }
@@ -84,17 +83,17 @@ function SitePage() {
   useEffect(() => {
     AllSites();
   }, []);
-useEffect(() => {
-      if (allsites.length > 0) {
-        const table = $("#attendanceTable");
-    
-        if ($.fn.DataTable.isDataTable("#attendanceTable")) {
-          table.DataTable().destroy();
-        }
-    
-        table.DataTable();
+  useEffect(() => {
+    if (allsites.length > 0) {
+      const table = $("#attendanceTable");
+
+      if ($.fn.DataTable.isDataTable("#attendanceTable")) {
+        table.DataTable().destroy();
       }
-    }, [allsites]);
+
+      table.DataTable();
+    }
+  }, [allsites]);
   return (
     <Layout>
       <div
