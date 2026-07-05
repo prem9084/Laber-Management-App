@@ -47,6 +47,18 @@ const FinalLaberSheet = () => {
     fetchFinalData();
   }, []);
 
+  useEffect(() => {
+    if ( finalData.length > 0) {
+      const table = $("#attendanceTable");
+  
+      if ($.fn.DataTable.isDataTable("#attendanceTable")) {
+        table.DataTable().destroy();
+      }
+  
+      table.DataTable();
+    }
+  }, [finalData]);
+
   return (
     <Layout>
       <div

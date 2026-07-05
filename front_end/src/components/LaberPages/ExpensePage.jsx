@@ -1,31 +1,45 @@
-import React from 'react'
-import Layout from '../HeadSection/Layout'
-import Sidebar from '../Sidebar/Sidebar'
-import { useState } from 'react';
-import axios from 'axios';
-import { useEffect } from 'react';
-import api from '../../api/axios';
+import React from "react";
+import Layout from "../HeadSection/Layout";
+import Sidebar from "../Sidebar/Sidebar";
+import { useState } from "react";
+import axios from "axios";
+import { useEffect } from "react";
+import api from "../../api/axios";
 
 const ExpensePage = () => {
-    const [expenses, setExpenses] = useState([]);
- const token = localStorage.getItem("token");
- const user = JSON.parse(localStorage.getItem("user"));
-const id = user?.id;
+  const [expenses, setExpenses] = useState([]);
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user"));
+  const id = user?.id;
   const getAllMyExpences = async () => {
     try {
-      const {data} = await api.get(`/api/laber/my-expenses/${id}`,{headers: {
+      const { data } = await api.get(`/api/laber/my-expenses/${id}`, {
+        headers: {
           Authorization: `Bearer ${token}`,
-        },});
+        },
+      });
       setExpenses(data.expenses);
     } catch (error) {
-      console.log('Error fetching expenses:', error);
+      console.log("Error fetching expenses:", error);
     }
-  }
-  useEffect(()=>{
+  };
+  useEffect(() => {
     getAllMyExpences();
-  },[])
+  }, []);
+
+  useEffect(() => {
+    if (expenses.length > 0) {
+      const table = $("#attendanceTable");
+
+      if ($.fn.DataTable.isDataTable("#attendanceTable")) {
+        table.DataTable().destroy();
+      }
+
+      table.DataTable();
+    }
+  }, [expenses]);
   return (
-  <Layout>
+    <Layout>
       <div
         className="d-flex flex-column flex-md-row"
         style={{ minHeight: "100vh", marginTop: "9rem" }}
@@ -70,7 +84,9 @@ const id = user?.id;
                           {expenses.map((e, i) => (
                             <tr key={i}>
                               <td>{e.siteId?.siteName}</td>
-                              <td>{e.laberId?.name} S/O {e.laberId?.fatherName}</td>
+                              <td>
+                                {e.laberId?.name} S/O {e.laberId?.fatherName}
+                              </td>
                               <td>
                                 <span className="badge bg-success">
                                   ₹{Number(e.Amount).toLocaleString("en-IN")}
@@ -84,7 +100,7 @@ const id = user?.id;
                               </td>{" "}
                             </tr>
                           ))}
-                        </tbody> 
+                        </tbody>
                       </table>
                     </div>
                   </div>
@@ -292,8 +308,7 @@ const id = user?.id;
         </div>
       </div>
     </Layout>
-    
-  )
-}
+  );
+};
 
-export default ExpensePage
+export default ExpensePage;

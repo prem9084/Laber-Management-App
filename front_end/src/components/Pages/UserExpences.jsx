@@ -133,6 +133,19 @@ function ExpensePage() {
     }
   };
 
+
+  useEffect(() => {
+    if (expenses.length > 0) {
+      const table = $("#attendanceTable");
+  
+      if ($.fn.DataTable.isDataTable("#attendanceTable")) {
+        table.DataTable().destroy();
+      }
+  
+      table.DataTable();
+    }
+  }, [expenses]);
+
   return (
     <Layout>
       <div

@@ -100,6 +100,8 @@ function AttendancePage() {
     }
   };
 
+ 
+
   const deleteAttendance = async (id) => {
     try {
       setLoading(true);
@@ -130,6 +132,18 @@ function AttendancePage() {
     getUser();
     getAttendance();
   }, []);
+
+  useEffect(() => {
+    if (attendance.length > 0) {
+      const table = $("#attendanceTable");
+  
+      if ($.fn.DataTable.isDataTable("#attendanceTable")) {
+        table.DataTable().destroy();
+      }
+  
+      table.DataTable();
+    }
+  }, [attendance]);
 
   return (
     <Layout>

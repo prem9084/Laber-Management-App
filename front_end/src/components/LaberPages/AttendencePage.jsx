@@ -23,6 +23,19 @@ const id = user?.id;
   useEffect(()=>{
     getAllMyAttendence();
   },[])
+
+  useEffect(() => {
+      if (attendance.length > 0) {
+        const table = $("#attendanceTable");
+    
+        if ($.fn.DataTable.isDataTable("#attendanceTable")) {
+          table.DataTable().destroy();
+        }
+    
+        table.DataTable();
+      }
+    }, [attendance]);
+  
   return (
     <Layout>
       <div

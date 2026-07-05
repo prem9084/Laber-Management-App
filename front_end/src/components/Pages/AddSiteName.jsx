@@ -84,12 +84,17 @@ function SitePage() {
   useEffect(() => {
     AllSites();
   }, []);
-
-  // useEffect(() => {
-  //   if (allsites && allsites.length > 0) {
-  //     initDataTable("attendanceTable", allsites);
-  //   }
-  // }, [allsites]);
+useEffect(() => {
+      if (allsites.length > 0) {
+        const table = $("#attendanceTable");
+    
+        if ($.fn.DataTable.isDataTable("#attendanceTable")) {
+          table.DataTable().destroy();
+        }
+    
+        table.DataTable();
+      }
+    }, [allsites]);
   return (
     <Layout>
       <div
