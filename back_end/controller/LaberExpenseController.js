@@ -23,6 +23,7 @@ export const laberExpenses = async (req, res) => {
       date: selectedDate,
       Amount,
       description,
+      createdBy:req.user._id
     });
 
     res.status(201).json({
@@ -40,8 +41,9 @@ export const laberExpenses = async (req, res) => {
 
 export const getExpense = async (req, res) => {
   try {
+    const {id} = req.params
     const expenses = await laberExpenseModel
-      .find()
+      .find({createdBy:id})
       .populate("laberId", "name fatherName")
       .populate("siteId", "siteName");
 
@@ -103,9 +105,19 @@ export const deleteLaberExpense = async (req, res) => {
 
 // Finle Sheet Calculation like Attendance, Expense, Material, Labour, etc. for a specific site and date range exel sheet
 
+
+
 export const finalSheet = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    // Attendance (Only Logged-in Admin)
     const attendance = await Attendance.aggregate([
+      {
+        $match: {
+          createdBy: new mongoose.Types.ObjectId(id),
+        },
+      },
       {
         $group: {
           _id: {
@@ -113,7 +125,6 @@ export const finalSheet = async (req, res) => {
             laberId: "$laberId",
           },
 
-          // Attendance Count
           thandiAttendance: {
             $sum: {
               $cond: [{ $eq: ["$type", "0"] }, 1, 0],
@@ -126,7 +137,6 @@ export const finalSheet = async (req, res) => {
             },
           },
 
-          // Rate
           thandiRate: {
             $max: {
               $cond: [{ $eq: ["$type", "0"] }, "$rate", 0],
@@ -142,6 +152,7 @@ export const finalSheet = async (req, res) => {
       },
     ]);
 
+    // Today Expense
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
@@ -151,6 +162,7 @@ export const finalSheet = async (req, res) => {
     const todayExpense = await laberExpenseModel.aggregate([
       {
         $match: {
+          createdBy: new mongoose.Types.ObjectId(id),
           date: {
             $gte: startOfDay,
             $lte: endOfDay,
@@ -170,14 +182,13 @@ export const finalSheet = async (req, res) => {
     const totalTodayExpense =
       todayExpense.length > 0 ? todayExpense[0].totalExpense : 0;
 
-    console.log("Today's Total Expense:", totalTodayExpense);
-
+    // Final Sheet
     const result = await Promise.all(
       attendance.map(async (item) => {
-        // Expense
         const expense = await laberExpenseModel.aggregate([
           {
             $match: {
+              createdBy: new mongoose.Types.ObjectId(id),
               siteId: item._id.siteId,
               laberId: item._id.laberId,
             },
@@ -192,18 +203,18 @@ export const finalSheet = async (req, res) => {
           },
         ]);
 
-        const totalExpense = expense.length > 0 ? expense[0].totalExpense : 0;
+        const totalExpense =
+          expense.length > 0 ? expense[0].totalExpense : 0;
 
-        // User
         const laber = await User.findById(item._id.laberId);
 
-        // Site
         const site = await Site.findById(item._id.siteId);
 
-        // Amount
-        const thandiAmount = item.thandiAttendance * item.thandiRate;
+        const thandiAmount =
+          item.thandiAttendance * item.thandiRate;
 
-        const garamAmount = item.garamAttendance * item.garamRate;
+        const garamAmount =
+          item.garamAttendance * item.garamRate;
 
         const totalIncome = thandiAmount + garamAmount;
 
@@ -214,9 +225,7 @@ export const finalSheet = async (req, res) => {
           laberId: item._id.laberId,
 
           siteName: site?.siteName || "",
-
           laberName: laber?.name || "",
-
           fatherName: laber?.fatherName || "",
 
           thandiAttendance: item.thandiAttendance,
@@ -229,14 +238,13 @@ export const finalSheet = async (req, res) => {
           garamAmount,
 
           totalIncome,
-
           totalExpense,
-
           baki,
         };
-      }),
+      })
     );
 
+    // Totals
     const totals = result.reduce(
       (acc, item) => {
         acc.thandiAttendance += item.thandiAttendance;
@@ -253,7 +261,7 @@ export const finalSheet = async (req, res) => {
         totalIncome: 0,
         totalExpense: 0,
         baki: 0,
-      },
+      }
     );
 
     res.status(200).json({

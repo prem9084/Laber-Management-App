@@ -37,6 +37,7 @@ export const registerController = async (req, res) => {
       email,
       password: hashedPassword,
       address,
+      createdBy: req.user._id,
     });
     await user.save();
     res.status(201).json({
@@ -153,7 +154,12 @@ export const changePassword = async (req, res) => {
 
 export const getAllUser = async (req, res) => {
   try {
-    const users = await userModel.find({ role: "0" });
+    const { id } = req.params; // Admin ID
+
+    const users = await userModel.find({
+      createdBy: id,
+      role: "0",
+    });
 
     res.status(200).json({
       success: true,
