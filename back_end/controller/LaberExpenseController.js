@@ -41,7 +41,7 @@ export const laberExpenses = async (req, res) => {
 
 export const getExpense = async (req, res) => {
   try {
-    const {id} = req.params
+   const  id  = req.user.id;
     const expenses = await laberExpenseModel
       .find({createdBy:id})
       .populate("laberId", "name fatherName")
@@ -109,7 +109,7 @@ export const deleteLaberExpense = async (req, res) => {
 
 export const finalSheet = async (req, res) => {
   try {
-    const { id } = req.params;
+    const  id  = req.user.id;
 
     // Attendance (Only Logged-in Admin)
     const attendance = await Attendance.aggregate([

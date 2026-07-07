@@ -156,7 +156,7 @@ import mongoose from "mongoose";
 
 export const getAllUser = async (req, res) => {
   try {
-    const { id } = req.params;
+    const  id  = req.user.id;
 
     console.log("Admin ID:", id);
 

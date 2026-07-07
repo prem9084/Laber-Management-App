@@ -54,7 +54,7 @@ export const addSite = async (req, res) => {
 
 export const getAllSites = async (req, res) => {
   try {
-    const { id } = req.params;
+    const  id  = req.user.id;
     const sites = await SiteModel.find({ createdBy: id });
     res.status(200).send({ success: true, sites });
   } catch (error) {
@@ -92,8 +92,9 @@ export const deleteSite = async (req, res) => {
 // get attendance by laberId
 export const getLaberAttendence = async (req, res) => {
   try {
+    const  id  = req.user.id;
     const { laberId } = req.params;
-    const attendance = await attendenceModel.find({ laberId });
+    const attendance = await attendenceModel.find(id,{ laberId });
     res
       .status(200)
       .send({ message: "Attendance retrieved successfully", attendance });
@@ -152,7 +153,7 @@ export const deleteLaberAttendence = async (req, res) => {
 
 export const getAttendance = async (req, res) => {
   try {
-    const { id } = req.params;
+    const  id  = req.user.id;
 
     const attendance = await attendenceModel
       .find({ createdBy: id })
