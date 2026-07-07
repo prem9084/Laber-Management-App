@@ -2,6 +2,7 @@ import laberExpenseModel from "../models/LaberExpencesModel.js";
 import Attendance from "../models/attendanceModel.js";
 import User from "../models/userModel.js";
 import Site from "../models/SiteModel.js";
+import mongoose from "mongoose";
 export const laberExpenses = async (req, res) => {
   try {
     const {
