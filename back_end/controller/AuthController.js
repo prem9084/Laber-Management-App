@@ -53,7 +53,7 @@ export const registerController = async (req, res) => {
       message: "User registered successfully",
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Error registering user" });
+    res.status(500).json({ success: false, message:error });
   }
 };
 
