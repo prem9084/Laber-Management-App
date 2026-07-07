@@ -12,7 +12,7 @@ export const laberAttendence = async (req, res) => {
       type,
       rate,
       status,
-      createdBy: req.user._id,
+      createdBy: req.user.id,
     });
 
     res.status(201).json({

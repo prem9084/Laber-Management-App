@@ -37,7 +37,7 @@ export const registerController = async (req, res) => {
       email,
       password: hashedPassword,
       address,
-      createdBy: req.user._id,
+      createdBy: req.user.id,
     });
     await user.save();
     res.status(201).json({

@@ -23,7 +23,7 @@ export const laberExpenses = async (req, res) => {
       date: selectedDate,
       Amount,
       description,
-      createdBy:req.user._id
+      createdBy: req.user.id,
     });
 
     res.status(201).json({
