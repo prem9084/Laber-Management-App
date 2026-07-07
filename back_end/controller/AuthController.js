@@ -53,7 +53,7 @@ export const registerController = async (req, res) => {
       message: "User registered successfully",
     });
   } catch (error) {
-    res.status(500).json({ success: false, message:error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -152,14 +152,20 @@ export const changePassword = async (req, res) => {
   }
 };
 
+import mongoose from "mongoose";
+
 export const getAllUser = async (req, res) => {
   try {
-    const { id } = req.params; // Admin ID
+    const { id } = req.params;
+
+    console.log("Admin ID:", id);
 
     const users = await userModel.find({
-      createdBy: id,
+      createdBy: new mongoose.Types.ObjectId(id),
       role: "0",
     });
+
+    console.log("Users:", users);
 
     res.status(200).json({
       success: true,
@@ -168,10 +174,9 @@ export const getAllUser = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
-
     res.status(500).json({
       success: false,
-      message: "Something went wrong",
+      message: error.message,
     });
   }
 };
