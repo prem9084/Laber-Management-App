@@ -34,7 +34,7 @@ export const addSite = async (req, res) => {
 
     const site = await SiteModel.create({
       siteName,
-      createdBy: req.user._id,
+      createdBy: req.user.id,
     });
 
     res.status(201).json({
