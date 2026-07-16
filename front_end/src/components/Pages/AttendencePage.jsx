@@ -123,33 +123,17 @@ function AttendancePage() {
   }, []);
 
   // ---- Same safe DataTable logic as ExpensePage/UsersPage/SitePage ----
-  useEffect(() => {
-    const tableId = "#attendanceTable";
-
-    if (!attendance || attendance.length === 0) return;
-
-    const timer = setTimeout(() => {
-      // destroy old instance safely — NO "true" here, otherwise the
-      // <table> node itself gets removed from the DOM and the table
-      // disappears permanently on the next state update.
-      if ($.fn.DataTable.isDataTable(tableId)) {
-        $(tableId).DataTable().destroy();
+    useEffect(() => {
+    if (attendance.length > 0) {
+      const table = $("#attendanceTable");
+  
+      if ($.fn.DataTable.isDataTable("#attendanceTable")) {
+        table.DataTable().destroy();
       }
-
-      dtRef.current = $(tableId).DataTable({
-        paging: true,
-        searching: true,
-        ordering: true,
-        info: true,
-        pageLength: 10,
-        destroy: true,
-        autoWidth: false,
-        responsive: true,
-      });
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [attendance.length]); // 👈 same fix as ExpensePage / UsersPage / SitePage
+  
+      table.DataTable();
+    }
+  }, [attendance]); // 👈 same fix as ExpensePage / UsersPage / SitePage
 
   return (
     <Layout>

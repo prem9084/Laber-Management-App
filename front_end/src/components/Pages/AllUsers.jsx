@@ -112,34 +112,17 @@ function UsersPage() {
   }, []);
 
   // ---- Same DataTable logic as AttendancePage, with the destroy(true) bug fixed ----
-  useEffect(() => {
-    const tableId = "#attendanceTable";
-
-    if (!users || users.length === 0) return;
-
-    // wait DOM render complete
-    const timer = setTimeout(() => {
-      // destroy old instance safely — DO NOT pass "true", it removes the
-      // <table> node from the DOM entirely and breaks React's reference to it
-      if ($.fn.DataTable.isDataTable(tableId)) {
-        $(tableId).DataTable().destroy();
+useEffect(() => {
+    if (users.length > 0) {
+      const table = $("#attendanceTable");
+  
+      if ($.fn.DataTable.isDataTable("#attendanceTable")) {
+        table.DataTable().destroy();
       }
-
-      // init fresh
-      dtRef.current = $(tableId).DataTable({
-        paging: true,
-        searching: true,
-        ordering: true,
-        info: true,
-        pageLength: 10,
-        destroy: true,
-        autoWidth: false,
-        responsive: true,
-      });
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [users.length]); // 👈 same fix as AttendancePage
+  
+      table.DataTable();
+    }
+  }, [users]); // 👈 same fix as ExpensePage / UsersPage / SitePage// 👈 same fix as AttendancePage
 
   return (
     <Layout>
